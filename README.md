@@ -1,2 +1,3 @@
 # Lazor
-Lazor project
+Software Carpentry Lazor project
+Group member: Yufei Sun, Mordred Yuan
