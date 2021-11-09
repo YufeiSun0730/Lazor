@@ -4,6 +4,25 @@
 # In[1]:
 
 
+'''
+code organization
+1. class solver
+    1. read_file
+    2. interpret_board
+        turn into A:n1, B:n2, C:n3, start point, need to pass point, end point
+    3. move
+    4. check_position
+    5. solution
+2. class block?
+3. class lazor(x, y, vx, vy)
+    1. init
+    2. interaction_A
+    3. interaction_B
+    4. interaction_C
+
+'''
+
+
 import copy
 
 
