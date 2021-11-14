@@ -76,12 +76,12 @@ class Lasor():
             direction_out = [(-self.direction[0], self.direction[1]), self.direction]
         return direction_out
 
-    def current_lazor_path(start, direction, end):
+    def current_lazor_path(start, direction):
         path = []
         current_pos = start
         current_dir = direction
 
-        while current_pos != final_pos:
+        while current_pos != final_pos: # need to change to out of range
             if current_dir[0] < 0 and current_dir[1] < 0:
                 next_pos = (current_pos[0] - 1, current_pos[1] - 1)
             elif current_dir[0] > 0 and current_dir[1] > 0:
@@ -126,7 +126,31 @@ class Lasor():
             current_pos = next_pos
 
 
+# def solution(lazors, need_to_cross):
+    # lazor_stack = []
+    # position = []
+    # for i in range(len(lazors)):
+    #     lazor_stack.append() #position
+    #     position.append(find_block_coord())
+    # while need_to_cross:
+    #     #pop pos
 
+def find_path(currentPos, currentDir, need_to_cross, block_A, block_B, block_C, path):
+    score = 0
+    for i in range(len(need_to_cross)):
+        if need_to_cross[i] in path:
+            score += 1
+
+    if score == len(need_to_cross):
+        return path
+
+    path.append(currentPos)
+
+    potential_pos = find_block_coord(current_lazor_path(currentPos, currentDir))
+
+    if block_A != 0:
+        for p in potential_pos:
+            newPos = 
 
 
 
