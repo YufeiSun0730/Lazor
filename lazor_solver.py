@@ -341,4 +341,23 @@ def find_block_coord(vector, initial_coord, grid): # find possible block positio
     return block_coord_list
 
 
+if __name__ == "__main__":
+    grid, usable_blocks, lazors, points = read_bff("/Users/mordredyuan/Downloads/Lazor-main/LazorProjectFall2021/mad_1.bff")
+    block_A, block_B, block_C = type_and_number(usable_blocks["A"], usable_blocks["B"], usable_blocks["C"])
+    l = []
+    list_of_pos = []
+    list_of_dir = []
+    start_points = []
+    directions = []
+    for i in range(len(lazors)):
+        l.append(Lasor((lazors[i][0], lazors[i][1]), (lazors[i][2], lazors[i][3])))
+        a, b = l[i].current_lazor_path((lazors[i][0], lazors[i][1]), (lazors[i][2], lazors[i][3]), grid)
+        start_points.append((lazors[i][0], lazors[i][1]))
+        directions.append((lazors[i][2], lazors[i][3]))
+        list_of_pos.append(a)
+        list_of_dir.append(b)
+
+    
+    find_path(start_points, directions, points, block_A, block_B, block_C, [], grid)
+
 
