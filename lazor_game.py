@@ -80,6 +80,16 @@ class RefractBlock(Block): #class block C
 
 
 class Lazor(object):
+    '''
+                    **functions**
+
+                        get_path: get start point and path from start point
+
+                        next_lazor: get laser path location if within grid
+
+
+
+                    '''
 
     def __init__(self, grid: 'Grid', start: Tuple[int, int], direction: Tuple[int, int]):
         self.grid = grid
@@ -106,6 +116,19 @@ class Lazor(object):
 
 
 class LazorPath(object):
+    '''
+                generate laser path for object in contact
+                **function**
+                    get_full_path: obtain block type and coordinates on laser path
+
+                    get_passed_positions: obtain passed location in list for laser
+
+                    has_reached: obtain reached position
+
+                    add_lazor: append lazor to lazor path
+
+                '''
+
     def __init__(self):
         self.lazors: List[Lazor] = []
 
@@ -113,6 +136,7 @@ class LazorPath(object):
         full_path: List[Tuple[Tuple[int, int], Tuple[int, int]]] = []
         for lazor in self.lazors:
             full_path.append(lazor.get_path())
+
         return full_path
 
     def get_passed_positions(self) -> Set[Tuple[int, int]]:
@@ -120,6 +144,7 @@ class LazorPath(object):
         for lazor in self.lazors:
             passed.add(lazor.start)
             passed.add(lazor.end)
+            print(passed)
         return passed
 
     def has_reached(self, positions: List[Tuple[int, int]]) -> bool:
@@ -232,6 +257,7 @@ class Grid(object):
         block_central: Tuple[int, int] = start_point_centrals.intersection(end_point_centrals).pop()
         block_i = (block_central[0] - 1) // 2
         block_j = (block_central[1] - 1) // 2
+        print(self.grid[block_j][block_i])
         return self.grid[block_j][block_i]
 
     def __str__(self):
@@ -331,12 +357,14 @@ def build_lazor_path(grid: Grid,
     for new_lazor in new_lazors:
         build_lazor_path(grid=grid, current_lazor=new_lazor, lazor_path=lazor_path, blocks_along_path=blocks_along_path, is_init=False)
 
-
+# Set up DFS
 def solve_game(game: Game) -> Optional[Grid]:
+
     has_placed: Set[Tuple[int, int]] = set()
 
 
     def _solve() -> bool: #check empty value
+
         current_lazor_path = LazorPath()
         current_available_blocks: List[Tuple[int, int]] = []
         build_lazor_path(grid=game.grid, lazor_path=current_lazor_path, current_lazor=game.init_lazor, blocks_along_path=current_available_blocks, is_init=True)
@@ -351,7 +379,7 @@ def solve_game(game: Game) -> Optional[Grid]:
 
             # Actions?
             has_placed.add(block)
-            #print(has_placed)
+            print(has_placed)
 
             remaining_actions: List[str] = ['o'] + [k for k, v in game.blocks_to_place.items() if v > 0]
             for action in remaining_actions:
