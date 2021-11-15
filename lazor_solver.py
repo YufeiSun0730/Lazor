@@ -26,8 +26,9 @@ class Block:
 
 
 class Grid:
-    def __init__(self, position):
+    def __init__(self, position, category):
         self.position = position
+        self.category = category
 
     def findentdir(self):
         if self.position[0] % 2 == 0 and self.position[1] % 2 == 0: #find entering point of the laser on the block
@@ -63,8 +64,24 @@ def read_bff(filename):
     for row in contents[ind1 + 1:ind2]:  # extract grid info
         row = list(row.replace(' ', ''))
         vals.append(row)
+
+
     contents = contents[ind2 + 1:]
     xlen = len(vals[0])
+    ylen = len(vals)
+    blkvals = vals
+    xxlen = len(blkvals[0])
+    yylen = len(blkvals)
+    for i in range(yylen):
+        for j in range(xxlen):
+            if blkvals[i][j] == 'o':
+                blkvals[i][j] = '0'
+            else:
+                blkvals[i][j] = '1'
+
+    block_grid = blkvals
+
+
     grid = [[0 for i in range(2 * xlen + 1)]
             for j in range(2 * (ind2 - ind1) - 1)]
 
@@ -95,14 +112,17 @@ def read_bff(filename):
 
     usable_blocks = {'A': A, 'B': B, 'C': C}
 
+    for i in range(len(lazors)):
+        start_point = [lazors[i][0], lazors[i][1]]
+        direction = [lazors[i][2], lazors[i][3]]
+
     def trans(m): #reverse coordinate system to fit current coordinate system
         a = [[] for i in m[0]]
         for i in m:
             for j in range(len(i)):
                 a[j].append(i[j])
         return a
-    return trans(grid), usable_blocks, lazors, points  # return grid info
-
+    return trans(grid), usable_blocks, start_point, direction, points, block_grid  # return grid info
 
 class Lasor():
     def __init__(self, start, direction):
@@ -132,27 +152,27 @@ class Lasor():
             if position[0] % 2 == 1:
                 if direction[1] > 0:
                     # check the lower grid type
-                    if position[1] < int(len(grid) * 2):
-                      grid_type = grid[int(position[1] // 2)][position[0] // 2]
+                    if position[1] < len(grid):
+                      grid_type = grid[position[1]][position[0]]
                       collision_dir = "vertical"
                       return grid_type, collision_dir
                 else:
                     # check the upper grid type
                     if position[1] > 0:
-                      grid_type = grid[int(position[1] // 2 - 1)][position[0] // 2]
+                      grid_type = grid[int(position[1] - 1)][position[0]]
                       collision_dir = "vertical"
                       return grid_type, collision_dir
             else:
                 if direction[0] > 0:
                     # check the right grid type
-                    if position[0] < int(len(grid[0]) * 2):
-                      grid_type = grid[position[1] // 2][int(position[0] // 2)]
+                    if position[0] < len(grid[0]):
+                      grid_type = grid[position[1]][position[0]]
                       collision_dir = "horizontal"
                       return grid_type, collision_dir
                 else:
                     # check the left grid type
                     if position[0] > 0:
-                      grid_type = grid[position[1] // 2][int(position[0] // 2 - 1)]
+                      grid_type = grid[position[1]][int(position[0] - 1)]
                       collision_dir = "horizontal"
                       return grid_type, collision_dir
         path = []
@@ -172,17 +192,18 @@ class Lasor():
             else:
                 next_pos = (current_pos[0] + 1, current_pos[1] - 1) # (current_pos[0] + 1, current_pos[1] - 1)
 
-            if check_grid_type(next_pos, current_dir, grid) != None:
-                grid_type = check_grid_type(next_pos, current_dir, grid)[0]
-                collision_dir = check_grid_type(next_pos, current_dir, grid)[1]
+            if pos_check(next_pos, grid):
+                if check_grid_type(next_pos, current_dir, grid) != None:
+                    grid_content = check_grid_type(next_pos, current_dir, grid)[0].category
+                    collision_dir = check_grid_type(next_pos, current_dir, grid)[1]
             else:
                 next_dir = current_dir
 
-            if grid_type == "A":
+            if grid_content == "A":
                 next_dir = self.collide_A(collision_dir, current_dir)
-            elif grid_type == "B":
+            elif grid_content == "B":
                 next_dir = self.collide_B(collision_dir)
-            elif grid_type == "C":
+            elif grid_content == "C":
                 next_dir = self.collide_C(collision_dir, current_dir)
             else:
                 next_dir = current_dir
@@ -195,18 +216,13 @@ class Lasor():
             
             current_pos = next_pos
             current_dir = next_dir
-            if next_pos[0] >= 0 and next_pos[1] >= 0:
+            if pos_check(next_pos, grid):
               path.append(current_pos)
               dir.append(current_dir)
-              print("path", path)
 
             if current_dir == (0, 0):
               return path, dir
 
-            print("current_pos ", next_pos)
-            print(next_dir)
-
-            print(path, dir)
         return path, dir
 
 
@@ -225,7 +241,6 @@ def type_and_number(num_A, num_B, num_C):
 
 
 def find_path(currentPos, currentDir, need_to_cross, block_A, block_B, block_C, path, grid):
-    print(type(currentPos))
     score = 0
     for i in range(len(need_to_cross)):
         if need_to_cross[i] in path:
@@ -240,10 +255,11 @@ def find_path(currentPos, currentDir, need_to_cross, block_A, block_B, block_C, 
     lazor_dir = []
     potential_blockpos = []
     for i in range(len(currentPos)):
-        lazor = Lasor(currentPos, currentDir)
-        lazor_pos.append(lazor.current_lazor_path(currentPos[i], currentDir[i], grid)[0][1])
-        lazor_dir.append(lazor.current_lazor_path(currentPos[i], currentDir[i], grid)[1][1])
-        potential_blockpos.append(find_block_coord(current_lazor_path(currentPos[i], currentDir[i], grid)))
+        lazor = Lasor(currentPos[i], currentDir[i])
+        newpath, newdir = lazor.current_lazor_path(currentPos[i], currentDir[i], grid)
+        lazor_pos.append(newpath[1])
+        lazor_dir.append(newdir[1])
+        potential_blockpos.extend(find_block_coord_1(newpath, newdir, grid, blk_grid)) # need to put in blk_grid
 
     # for pos, direction in currentPos, currentDir:
     #     lazor_pos.append(current_lazor_path(pos, direction)[0][1])
@@ -254,7 +270,7 @@ def find_path(currentPos, currentDir, need_to_cross, block_A, block_B, block_C, 
         for p in potential_blockpos:
             # change grid to A
             temp = grid[p[1]][p[0]]
-            grid[p[1]][p[0]] = "A"
+            grid[p[1]][p[0]] = Block((p[0], p[1]), "A")
             newPos = lazor_pos
             newDir = lazor_dir
             find_path(newPos, newDir, need_to_cross, block_A.pop(), block_B, block_C, path.copy)
@@ -264,7 +280,7 @@ def find_path(currentPos, currentDir, need_to_cross, block_A, block_B, block_C, 
         for p in potential_blockpos:
             # change grid to B
             temp = grid[p[1]][p[0]]
-            grid[p[1]][p[0]] = "B"
+            grid[p[1]][p[0]] = Block((p[0], p[1]), "B")
             newPos = lazor_pos
             newDir = lazor_dir
             find_path(newPos, newDir, need_to_cross, block_A, block_B.pop(), block_C, path.copy)
@@ -274,7 +290,7 @@ def find_path(currentPos, currentDir, need_to_cross, block_A, block_B, block_C, 
         for p in potential_blockpos:
             # change grid to B
             temp = grid[p[1]][p[0]]
-            grid[p[1]][p[0]] = "C"
+            grid[p[1]][p[0]] = Block((p[0], p[1]), "C")
             newPos = lazor_pos
             newDir = lazor_dir
             find_path(newPos, newDir, need_to_cross, block_A, block_B, block_C.pop(), path.copy)
@@ -298,57 +314,55 @@ def path_with_C(start, dir, grid):
     path.append(b1[1:])
     return path
 
-def find_block_coord(vector, initial_coord, grid): # find possible block position coordinates
+
+def find_block_coord_1(path, dir, grid, blk_grid): # find possible block position coordinates
     block_coord_list = []
-    laser_coord = []
-    x = initial_coord[0]
-    y = initial_coord[1]
 
-    while pos_check([x,y],grid): # find laser path coordinates
-        laser_coord.append(Grid([x,y]))
-        x += vector[0]
-        y += vector[1] # update position
+    xlen = len(path)
 
-    for l_co in laser_coord: # for given laser intersection coordinates, find block coordinates
+    for x in range(xlen):# for given laser intersection coordinates, find block coordinates
+        block_coord = []
 
-        block_coord = [l_co.position[0], l_co.position[1]] # set initial position
+        if dir[x][0] < 0 and dir[x][1] < 0:  # predict block position with given point and direction vector
+            if path[x][0] % 2 == 0:
+                block_coord = [path[x][0] - 1, path[x][1]]
+            elif path[x][1] % 2 == 0:
+                block_coord = [path[x][0], path[x][1] - 1]
 
-        if vector[0] < 0 and vector[1] < 0: # predict block position with given point and direction vector
-            if l_co.findentdir() == 'side':
-                block_coord = [block_coord[0] - 1, block_coord[1]]
-            if l_co.findentdir() == 'vert':
-                block_coord = [block_coord[0] , block_coord[1] - 1]
+        elif dir[x][0] > 0 and dir[x][1] < 0:
+            if path[x][0] % 2 == 0:
 
-        elif vector[0] > 0 and vector[1] < 0:
-            if l_co.findentdir() == 'side':
-                block_coord = [block_coord[0] + 1, block_coord[1]]
-            if l_co.findentdir() == 'vert':
-                block_coord = [block_coord[0], block_coord[1] - 1]
+                block_coord = [path[x][0] + 1, path[x][1]]
+            elif path[x][1] % 2 == 0:
 
-        elif vector[0] > 0 and vector[1] > 0:
-            if l_co.findentdir() == 'side':
-                block_coord = [block_coord[0] + 1, block_coord[1]]
-            if l_co.findentdir() == 'vert':
-                block_coord = [block_coord[0], block_coord[0] + 1]
+                block_coord = [path[x][0], path[x][1] - 1]
 
-        elif vector[0] < 0 and vector[1] > 0:
-            if l_co.findentdir() == 'side':
-                block_coord = [block_coord[0] - 1, block_coord[1]]
-            if l_co.findentdir() == 'vert':
-                block_coord = [block_coord[0], block_coord[1] - 1]
-        if pos_check(block_coord, grid):
-            block_coord_list.append(block_coord) # append coordinate list
+        elif dir[x][0] > 0 and dir[x][1] > 0:
+            if path[x][0] % 2 == 0:
+                block_coord = [path[x][0] + 1, path[x][1]]
+            elif path[x][1] % 2 == 0:
+                block_coord = [path[x][0], path[x][1] + 1]
+
+        elif dir[x][0] < 0 and dir[x][1] > 0:
+            if path[x][0] % 2 == 0:
+                block_coord = [path[x][0] - 1, path[x][1]]
+            elif path[x][1] % 2 == 0:
+                block_coord = [path[x][0], path[x][1] - 1]
+
+        if blk_pos_check(block_coord, grid, blk_grid):
+            block_coord_list.append(block_coord)  # append coordinate list
     return block_coord_list
 
 
 if __name__ == "__main__":
-    grid, usable_blocks, lazors, points = read_bff("/Users/mordredyuan/Downloads/Lazor-main/LazorProjectFall2021/mad_1.bff")
+    grid, usable_blocks, lazors, points = read_bff("/Users/mordredyuan/Downloads/Lazor-main/LazorProjectFall2021/tiny_5.bff")
     block_A, block_B, block_C = type_and_number(usable_blocks["A"], usable_blocks["B"], usable_blocks["C"])
     l = []
     list_of_pos = []
     list_of_dir = []
     start_points = []
     directions = []
+    grid[3][1] =  Block((1, 3), "A")
     for i in range(len(lazors)):
         l.append(Lasor((lazors[i][0], lazors[i][1]), (lazors[i][2], lazors[i][3])))
         a, b = l[i].current_lazor_path((lazors[i][0], lazors[i][1]), (lazors[i][2], lazors[i][3]), grid)
@@ -357,7 +371,11 @@ if __name__ == "__main__":
         list_of_pos.append(a)
         list_of_dir.append(b)
 
+    print(list_of_pos)
+
     
-    find_path(start_points, directions, points, block_A, block_B, block_C, [], grid)
+    #find_path(start_points, directions, points, block_A, block_B, block_C, [], grid)
+    
+
 
 
