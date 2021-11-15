@@ -461,9 +461,11 @@ def read_bff(filename):
 
     usable_blocks = {'A': A, 'B': B, 'C': C}
 
+    start_point = []
+    direction = []
     for i in range(len(lazors)):
-        start_point = (lazors[i][0], lazors[i][1])
-        direction = (lazors[i][2], lazors[i][3])
+        start_point.append((lazors[i][0], lazors[i][1]))
+        direction.append((lazors[i][2], lazors[i][3]))
 
     def trans(m): #reverse coordinate system to fit current coordinate system
         a = [[] for i in m[0]]
@@ -475,7 +477,7 @@ def read_bff(filename):
 
 
 if __name__ == "__main__":
-    grid, usable_blocks, start_point, direction, points, block_grid = read_bff("/Users/mordredyuan/Downloads/Lazor-main/LazorProjectFall2021/mad_1.bff")
+    grid, usable_blocks, start_point, direction, points, block_grid = read_bff("/Users/mordredyuan/Downloads/Lazor-main/LazorProjectFall2021/tiny_5.bff")
     block_A, block_B, block_C = type_and_number(usable_blocks["A"], usable_blocks["B"], usable_blocks["C"])
     print(start_point)
     print(direction)
@@ -484,11 +486,11 @@ if __name__ == "__main__":
     list_of_dir = []
     start_points = []
     directions = []
-    for i in range(len(lazors)):
-        l.append(Lasor((lazors[i][0], lazors[i][1]), (lazors[i][2], lazors[i][3])))
-        a, b = l[i].current_lazor_path((lazors[i][0], lazors[i][1]), (lazors[i][2], lazors[i][3]), grid)
-        start_points.append((lazors[i][0], lazors[i][1]))
-        directions.append((lazors[i][2], lazors[i][3]))
+    for i in range(len(start_point)):
+        l.append(Lasor(start_point[i], direction[i]))
+        a, b = l[i].current_lazor_path(start_point[i], direction[i], grid)
+        start_points.append(start_point[i])
+        directions.append(direction[i])
         list_of_pos.append(a)
         list_of_dir.append(b)
 
@@ -496,4 +498,3 @@ if __name__ == "__main__":
 
     
     #find_path(start_points, directions, points, block_A, block_B, block_C, [], grid)
-    
