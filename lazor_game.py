@@ -1,21 +1,46 @@
+'''
+EN.640.635 Software Carpentry
+Lazor Project
+
+In this assignment, a lazor game solver was created to
+read and solve a lazor puzzle from the lazor mobile app.
+In the solver, we used Depth First Search method to find
+the place to place blocks that will give the winning solutions.
+
+'''
+
+
 from collections import Counter
 from typing import Tuple, List, Dict, Optional, Set
 import argparse
+
 
 # Defines lazor direction constants
 DIRECTION_UPPER_LEFT = (-1, -1)
 DIRECTION_UPPER_RIGHT = (1, -1)
 DIRECTION_BOTTOM_LEFT = (-1, 1)
 DIRECTION_BOTTOM_RIGHT = (1, 1)
-DIRECTIONS = [DIRECTION_UPPER_LEFT, DIRECTION_UPPER_RIGHT, DIRECTION_BOTTOM_LEFT, DIRECTION_BOTTOM_RIGHT]
+DIRECTIONS = [DIRECTION_UPPER_LEFT, DIRECTION_UPPER_RIGHT, 
+                DIRECTION_BOTTOM_LEFT, DIRECTION_BOTTOM_RIGHT]
+
 
 # class block
 class Block(object):
+    '''
+    This class acts as a initializer for a the block class and contains 
+    pass_through and type_str function.
+    '''
     def __init__(self, central: Tuple[int, int], grid: 'Grid'):
+        '''
+        Initialize the block class.
+        '''
         self.central = central
         self.grid = grid
 
     def pass_through(self, in_position: Tuple[int, int], direction: Tuple[int, int]) -> List['Lazor']: # Lasor path through
+        '''
+        This function raises NotImplementedError when pass through.
+        '''
         raise NotImplementedError
 
     def type_str(self) -> str:
@@ -30,6 +55,21 @@ class Block(object):
 
 class EmptyBlock(Block): #class block X
     def pass_through(self, in_position: Tuple[int, int], direction: Tuple[int, int]) -> List['Lazor']:
+        '''
+        **functions**
+
+        This function takes in two tuple arguments and will return return new lazor object 
+
+        after interaction with emptyblock.
+
+        **Parameters**
+
+
+        in_position: the position in
+
+        direction: the reflect position
+
+        '''
 
         new_lazor = Lazor(grid=self.grid, start=in_position, direction=direction)
         if self.grid.within_grid(position=new_lazor.end):
@@ -43,6 +83,21 @@ class EmptyBlock(Block): #class block X
 
 class ReflectBlock(Block): #class block A
     def pass_through(self, in_position: Tuple[int, int], direction: Tuple[int, int]) -> List['Lazor']:
+        '''
+        **functions**
+
+        This function takes in two tuple arguments and will return new lazor object 
+
+        after interaction with ReflectBlock.
+
+        **Parameters**
+
+        in_position: the position in
+
+        direction: the reflect position
+
+        '''
+
         reflect_direction = in_position[0] % 2
         if reflect_direction == 0:
             new_direction = (- direction[0], direction[1]) # reflect on the side
@@ -56,7 +111,29 @@ class ReflectBlock(Block): #class block A
 
 
 class OpaqueBlock(Block): #class block B
+    '''
+    **class**
+
+    This is the class for OpaqueBlock (Type B).
+
+    '''
     def pass_through(self, in_position: Tuple[int, int], direction: Tuple[int, int]) -> List['Lazor']:
+        '''
+        **functions**
+
+        This function takes in two tuple arguments and will return new lazor object (which is none)
+
+        after interaction with OpaqueBlock.
+
+
+        **Parameters**
+
+
+        in_position: the position in
+
+        direction: the reflect position
+
+        '''
         return []
 
     def type_str(self) -> str:
@@ -70,9 +147,27 @@ class RefractBlock(Block): #class block C
         self.reflect_block = ReflectBlock(central, grid)
 
     def pass_through(self, in_position: Tuple[int, int], direction: Tuple[int, int]) -> List['Lazor']:
+        '''
+        **functions**
+
+        This function takes in two tuple arguments and will return two lazor objects
+
+        after interaction with RefractBlock.
+
+
+        **Parameters**
+
+
+        in_position: the position in
+
+        direction: the reflect position
+
+        '''
         to_return = []
-        to_return.extend(self.empty_block.pass_through(in_position, direction)) #laser paththrough
-        to_return.extend(self.reflect_block.pass_through(in_position, direction)) #laser also reflect
+        to_return.extend(self.empty_block.pass_through(in_position, direction)) 
+        #laser paththrough
+        to_return.extend(self.reflect_block.pass_through(in_position, direction)) 
+        #laser also reflect
         return to_return
 
     def type_str(self) -> str:
@@ -81,15 +176,14 @@ class RefractBlock(Block): #class block C
 
 class Lazor(object):
     '''
-                    **functions**
+    **functions**
 
-                        get_path: get start point and path from start point
+    get_path: get start point and path from start point
 
-                        next_lazor: get laser path location if within grid
+    next_lazor: get laser path location if within grid
 
 
-
-                    '''
+    '''
 
     def __init__(self, grid: 'Grid', start: Tuple[int, int], direction: Tuple[int, int]):
         self.grid = grid
@@ -97,16 +191,19 @@ class Lazor(object):
         self.start = start
         self.end = (start[0] + direction[0], start[1] + direction[1])
 
-    def get_path(self) -> Tuple[Tuple[int, int], Tuple[int, int]]:
+    def get_path(self) -> Tuple[Tuple[int, int], Tuple[int, int]]: 
+        # This function gets the path of the lazor
         return self.start, self.end
 
-    def next_lazor(self) -> Optional['Lazor']:
+    def next_lazor(self) -> Optional['Lazor']: 
+        # find next lazor object
         if self.grid.within_grid(position=self.end):
             return Lazor(self.grid, self.end, self.direction)
         return None
 
     def __eq__(self, other):
-        return self.start == other.start and self.direction == other.direction and self.end == other.end
+        return self.start == other.start and self.direction == other.direction \
+                                         and self.end == other.end
 
     def __str__(self):
         return f'Lazor({self.start}, {self.direction})'
@@ -117,22 +214,27 @@ class Lazor(object):
 
 class LazorPath(object):
     '''
-                generate laser path for object in contact
-                **function**
-                    get_full_path: obtain block type and coordinates on laser path
+    generate laser path for object in contact
+                
+    **function**
+    
+    get_full_path: obtain block type and coordinates on laser path
 
-                    get_passed_positions: obtain passed location in list for laser
+    get_passed_positions: obtain passed location in list for laser
 
-                    has_reached: obtain reached position
+    has_reached: obtain reached position
 
-                    add_lazor: append lazor to lazor path
+    add_lazor: append lazor to lazor path
 
-                '''
+    '''
 
     def __init__(self):
         self.lazors: List[Lazor] = []
 
     def get_full_path(self) -> List[Tuple[Tuple[int, int], Tuple[int, int]]]:
+        '''
+        This function returns the full path that the lazor has passed.
+        '''
         full_path: List[Tuple[Tuple[int, int], Tuple[int, int]]] = []
         for lazor in self.lazors:
             full_path.append(lazor.get_path())
@@ -140,11 +242,13 @@ class LazorPath(object):
         return full_path
 
     def get_passed_positions(self) -> Set[Tuple[int, int]]:
+        '''
+        This is where the passed positions of the lazor has been returned.
+        '''
         passed = set()
         for lazor in self.lazors:
             passed.add(lazor.start)
             passed.add(lazor.end)
-            print(passed)
         return passed
 
     def has_reached(self, positions: List[Tuple[int, int]]) -> bool:
@@ -163,25 +267,25 @@ class LazorPath(object):
 
 class Grid(object):
     '''
-                **functions**
+    **functions**
 
-                    is_block_available: check center coordinates for available block position
+    is_block_available: check center coordinates for available block position
 
-                    central_to_block_idx: return edge coordinates
+    central_to_block_idx: return edge coordinates
 
-                    place_block: place block if position available
+    place_block: place block if position available
 
-                    revert_block: remove block position to empty block
+    revert_block: remove block position to empty block
 
-                    within_grid: position check if position is in grid
+    within_grid: position check if position is in grid
 
-                    reach_boundary: position check for boundary
-
-
-                **Returns**
+    reach_boundary: position check for boundary
 
 
-                '''
+    **Returns**
+
+
+    '''
     def __init__(self, blocks: List[List[str]]):
         # Limits are right exclusive
         self.x_limit = len(blocks[0]) * 2 + 1
@@ -208,6 +312,9 @@ class Grid(object):
             self.grid.append(new_row)
 
     def is_block_available(self, central: Tuple[int, int]) -> bool:
+        '''
+        This function is to check the center coordinates for available block position.
+        '''
         if central in self.forbidden_centrals:
             return False
         block_x, block_y = self.central_to_block_idx(central=central)
@@ -215,9 +322,15 @@ class Grid(object):
 
     @staticmethod
     def central_to_block_idx(central: Tuple[int, int]) -> Tuple[int, int]:
+        '''
+        This function returns the edge coordinates for the given grid.
+        '''
         return (central[0] - 1) // 2, (central[1] - 1) // 2
 
     def place_block(self, central: Tuple[int, int], block: Block) -> bool:
+        '''
+        This function helps with placing the blocks if position is available.
+        '''
         if self.is_block_available(central=central):
             block_x, block_y = self.central_to_block_idx(central=central)
             self.grid[block_y][block_x] = block
@@ -225,6 +338,10 @@ class Grid(object):
         return False
 
     def revert_block(self, central: Tuple[int, int]) -> bool:
+        '''
+        This function removes some block position as empty block.
+        '''
+
         if central in self.forbidden_centrals:
             return False
         block_x, block_y = self.central_to_block_idx(central=central)
@@ -232,9 +349,11 @@ class Grid(object):
         return True
 
     def within_grid(self, position: Tuple[int, int]) -> bool:
+        # position check if position is in grid
         return 0 <= position[0] < self.x_limit and 0 <= position[1] < self.y_limit
 
     def reach_boundary(self, position: Tuple[int, int]) -> bool:
+        # position check for boundary
         return (
                 position[0] == 0
                 or position[0] == self.x_limit - 1
@@ -244,6 +363,7 @@ class Grid(object):
 
     @staticmethod
     def nearby_centrals(x, y) -> Set[Tuple[int, int]]:
+        # This function return the central coordinates for nearby grid.
         if x % 2 == 0:
             return {(x - 1, y), (x + 1, y)}
         elif y % 2 == 0:
@@ -252,22 +372,29 @@ class Grid(object):
     def get_laser_in_block(self,
                            in_position: Tuple[int, int],
                            direction: Tuple[int, int]) -> Block:
+        # This function get the laser in block and returns a grid object.
         start_point_centrals = self.nearby_centrals(in_position[0], in_position[1])
-        end_point_centrals = self.nearby_centrals(in_position[0] + direction[0], in_position[1] + direction[1])
-        block_central: Tuple[int, int] = start_point_centrals.intersection(end_point_centrals).pop()
+        end_point_centrals = self.nearby_centrals(in_position[0] + direction[0], 
+                                                    in_position[1] + direction[1])
+        block_central: Tuple[int, int] = start_point_centrals.intersection(
+                                                        end_point_centrals).pop()
         block_i = (block_central[0] - 1) // 2
         block_j = (block_central[1] - 1) // 2
-        print(self.grid[block_j][block_i])
         return self.grid[block_j][block_i]
 
     def __str__(self):
-        return '\n'.join([''.join([f'[{block.type_str()}]' for block in row]) for row in self.grid])
+        return '\n'.join([''.join([f'[{block.type_str()}]' for block in row]) 
+                                                                for row in self.grid])
 
     def to_output(self) -> str:
-        return '\n'.join([' '.join([f'{block.type_str()}' for block in row]) for row in self.grid])
+        return '\n'.join([' '.join([f'{block.type_str()}' for block in row]) 
+                                                                for row in self.grid])
 
 
 class Game(object):
+    '''
+    This is the class for the game objects.
+    '''
     def __init__(self,
                  grid: Grid,
                  intersection_points: List[Tuple[int, int]],
@@ -285,22 +412,26 @@ class Game(object):
 
     def read_bff(cls, filename: str) -> 'Game':
         '''
-            Reads in .bff file, returning relevant board parameters
-            **Parameters**
-                None
-            **Returns**
-                filename: str
-                    Name of bff file
-                block_strs: list of list
-                    Type of blocks
-                blocks_to_place: Dict
-                    Block type and corresponding number
-                init_lazor: None type
-                    initial lazor point and vector
-                intersection_points: list
-                    List of intersection point
-                init_grid: Grid
-                    initial grid info
+        Reads in .bff file, returning relevant board parameters
+            
+        **Parameters**
+                
+            None
+            
+        **Returns**
+                
+        filename: str
+                Name of bff file
+        block_strs: list of list
+                Type of blocks
+        blocks_to_place: Dict
+                Block type and corresponding number
+        init_lazor: None type
+                initial lazor point and vector
+        intersection_points: list
+                List of intersection point
+        init_grid: Grid
+                initial grid info
 
             '''
 
@@ -310,6 +441,7 @@ class Game(object):
         intersection_points: List[Tuple[int, int]] = []
 
         with open(filename, 'r') as f:
+            # open the file and read the contents
             read_grid: bool = False
             for line in f:
                 if line.startswith('#'):
@@ -319,6 +451,7 @@ class Game(object):
                 elif line.startswith('GRID STOP'):
                     read_grid = False
                 elif read_grid:
+                    #append block information to block strings
                     block_strs.append(line.strip().split())
                 elif line.startswith('A') or line.startswith('B') or line.startswith('C'):
                     line_splits = line.split()
@@ -334,7 +467,9 @@ class Game(object):
                     line_splits = line.split()
                     intersection_points.append((int(line_splits[1]), int(line_splits[2])))
         init_grid = Grid(block_strs)
-        return cls(grid=init_grid, intersection_points=intersection_points, blocks_to_place=Counter(blocks_to_place), init_lazor=Lazor(grid=init_grid, start=init_lazor[0], direction=init_lazor[1]),)
+        return cls(grid=init_grid, intersection_points=intersection_points, 
+                blocks_to_place=Counter(blocks_to_place), 
+            init_lazor=Lazor(grid=init_grid, start=init_lazor[0], direction=init_lazor[1]),)
 
 
 def build_lazor_path(grid: Grid,
@@ -342,6 +477,10 @@ def build_lazor_path(grid: Grid,
                      current_lazor: Lazor,
                      blocks_along_path: List[Tuple[int, int]],
                      is_init: bool = False):
+    '''
+    This function takes in a grid obj, a lazer_path obj, a Lazor obj, a list, and a bool,
+    and returns function.
+    '''
     if not is_init:
         has_visited = lazor_path.add_lazor(current_lazor)
         if has_visited:
@@ -351,14 +490,22 @@ def build_lazor_path(grid: Grid,
         return
 
     block_in_pos = current_lazor.end if not is_init else current_lazor.start
-    laser_in_block: Block = grid.get_laser_in_block(in_position=block_in_pos, direction=current_lazor.direction)
+    laser_in_block: Block = grid.get_laser_in_block(in_position=block_in_pos, 
+                                                    direction=current_lazor.direction)
     blocks_along_path.append(laser_in_block.central)
-    new_lazors = laser_in_block.pass_through(in_position=block_in_pos, direction=current_lazor.direction)
+    new_lazors = laser_in_block.pass_through(in_position=block_in_pos, 
+                                             direction=current_lazor.direction)
     for new_lazor in new_lazors:
-        build_lazor_path(grid=grid, current_lazor=new_lazor, lazor_path=lazor_path, blocks_along_path=blocks_along_path, is_init=False)
+        build_lazor_path(grid=grid, current_lazor=new_lazor, 
+                         lazor_path=lazor_path, blocks_along_path=blocks_along_path, 
+                         is_init=False)
 
 # Set up DFS
 def solve_game(game: Game) -> Optional[Grid]:
+    '''
+    This is the main solver in this project. Depth First Search algorithms
+    are used in creating this solver.
+    '''
 
     has_placed: Set[Tuple[int, int]] = set()
 
@@ -367,9 +514,11 @@ def solve_game(game: Game) -> Optional[Grid]:
 
         current_lazor_path = LazorPath()
         current_available_blocks: List[Tuple[int, int]] = []
-        build_lazor_path(grid=game.grid, lazor_path=current_lazor_path, current_lazor=game.init_lazor, blocks_along_path=current_available_blocks, is_init=True)
+        build_lazor_path(grid=game.grid, lazor_path=current_lazor_path, 
+                         current_lazor=game.init_lazor, 
+                         blocks_along_path=current_available_blocks, is_init=True)
 
-        # Whether this left some blocks unused?
+        # Whether this left some blocks unused
         if game.is_winning(lazor_path=current_lazor_path):
             return True
 
@@ -377,12 +526,11 @@ def solve_game(game: Game) -> Optional[Grid]:
             if block in has_placed:
                 continue
 
-            # Actions?
+            # Actions
             has_placed.add(block)
-            print(has_placed)
 
             remaining_actions: List[str] = ['o'] + [k for k, v in game.blocks_to_place.items() if v > 0]
-            for action in remaining_actions:
+            for action in remaining_actions:  # need to figure out the action type
                 if action == 'o':
                     place_success = True
                 elif action == 'A':
@@ -395,7 +543,7 @@ def solve_game(game: Game) -> Optional[Grid]:
                     new_block = RefractBlock(central=block, grid=game.grid)
                     place_success = game.grid.place_block(central=block, block=new_block)
                 else:
-                    raise ValueError('Invalid action.')
+                    raise ValueError('Invalid action.') # raise error for Invalid action
 
                 if action != 'o' and place_success:
                     game.blocks_to_place[action] -= 1
@@ -415,7 +563,7 @@ def solve_game(game: Game) -> Optional[Grid]:
 
 
 if __name__ == '__main__':
-    game = Game.read_bff(filename='tiny_5.bff')
+    game = Game.read_bff(filename='/Users/mordredyuan/Downloads/Lazor-main/LazorProjectFall2021/mad_4.bff')
     solution = solve_game(game)
     with open('solution.txt', 'w') as f:
         if solution is None:
@@ -423,6 +571,8 @@ if __name__ == '__main__':
         else:
             f.write(solution.to_output())
 
+
+    # The following code are for unit testing purposes.
     # test_grid1 = Grid([['o', 'o', 'C', 'o'],
     #                    ['o', 'o', 'o', 'A'],
     #                    ['A', 'o', 'o', 'o'],
@@ -431,3 +581,28 @@ if __name__ == '__main__':
     #                    ['o', 'o', 'o', 'o'],
     #                    ['A', 'o', 'o', 'C'],
     #                    ['o', 'o', 'A', 'o']])
+    # Dark_1.bff
+    #grid = [['x', 'o', 'o'], ['o', 'o', 'o'], ['o', 'o', 'x']]
+    # A_blocks = 0
+    # B_blocks = 3
+    # C_blocks = 0
+    # lazors = [[(3, 0), (-1, 1)], [(1, 6), (1, -1)],
+    #           [(3, 6), (-1, -1)], [(4, 3), (1, -1)]]
+    # points = [(0, 3), (6, 1)]
+    # Mad_1.bff
+    # grid = [['o', 'o', 'o', 'o'], ['o', 'o', 'o', 'o'],
+    #         ['o', 'o', 'o', 'o'], ['o', 'o', 'o', 'o']]
+    # A_blocks = 2
+    # B_blocks = 0
+    # C_blocks = 1
+    # lazors = [[(2, 7), (1, -1)]]
+    # points = [(3, 0), (4, 3), (2, 5), (4, 7)]
+    # Mad_4.bff
+    # grid = [['o', 'o', 'o', 'o'], ['o', 'o', 'o', 'o'],
+    #         ['o', 'o', 'o', 'o'], ['o', 'o', 'o', 'o'], ['o', 'o', 'o', 'o']]
+    # A_blocks = 5
+    # B_blocks = 0
+    # C_blocks = 0
+    # lazors = [[(7, 2), (-1, 1)]]
+    # points = [(3, 4), (7, 4), (5, 8)]
+
