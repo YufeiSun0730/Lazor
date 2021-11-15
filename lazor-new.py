@@ -133,27 +133,28 @@ class Lasor():
             if position[0] % 2 == 1:
                 if direction[1] > 0:
                     # check the lower grid type
-                    if position[1] < int(len(grid) * 2):
-                      grid_type = grid[int(position[1] // 2)][position[0] // 2]
+                    if position[1] < len(grid):
+                      grid_type = grid[position[1]][position[0]]
                       collision_dir = "vertical"
                       return grid_type, collision_dir
                 else:
                     # check the upper grid type
                     if position[1] > 0:
-                      grid_type = grid[int(position[1] // 2 - 1)][position[0] // 2]
+                      grid_type = grid[int(position[1] - 1)][position[0]]
                       collision_dir = "vertical"
                       return grid_type, collision_dir
             else:
                 if direction[0] > 0:
                     # check the right grid type
-                    if position[0] < int(len(grid[0]) * 2):
-                      grid_type = grid[position[1] // 2][int(position[0] // 2)]
+                    if position[0] < len(grid[0]):
+                      grid_type = grid[position[1]][position[0]]
                       collision_dir = "horizontal"
                       return grid_type, collision_dir
                 else:
                     # check the left grid type
                     if position[0] > 0:
-                      grid_type = grid[position[1] // 2][int(position[0] // 2 - 1)]
+                      print([[position[1]], [int(position[0] - 1)]])
+                      grid_type = grid[position[1]][int(position[0] - 1)]
                       collision_dir = "horizontal"
                       return grid_type, collision_dir
         path = []
@@ -176,6 +177,7 @@ class Lasor():
             grid_content = None
             if check_grid_type(next_pos, current_dir, grid) != None:
                 grid_content = check_grid_type(next_pos, current_dir, grid)[0].category
+                print(grid_content)
                 collision_dir = check_grid_type(next_pos, current_dir, grid)[1]
             else:
                 next_dir = current_dir
@@ -249,6 +251,7 @@ def find_path(currentPos, currentDir, need_to_cross, block_A, block_B, block_C, 
             block_coord = find_block_coord(dirList[1], posList[1], grid)
             for t in block_coord:
                 potential_blockpos.append(t)
+
 
     # for lazor in laszors:
     if len(block_A) != 0:
@@ -486,6 +489,7 @@ if __name__ == "__main__":
     list_of_dir = []
     start_points = []
     directions = []
+    grid[3][1] =  Block((1, 3), "B")
     for i in range(len(start_point)):
         l.append(Lasor(start_point[i], direction[i]))
         a, b = l[i].current_lazor_path(start_point[i], direction[i], grid)
@@ -497,4 +501,4 @@ if __name__ == "__main__":
     print(list_of_pos)
 
     
-    #find_path(start_points, directions, points, block_A, block_B, block_C, [], grid)
+    find_path(start_points, directions, points, block_A, block_B, block_C, [], grid)
