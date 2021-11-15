@@ -1,7 +1,9 @@
 # Lazor Game Solver
-Software Carpentry Lazor project Fall 2021
+### Software Carpentry Lazor project Fall 2021
 
 Group member: Yufei Sun, Mordred Yuan
+
+
 
 Here we present a solver that can read and solve a lazor puzzle from the lazor mobile app. 
 
@@ -10,5 +12,10 @@ You can open the lazor_game.py file and input the link to the downloaded bff fil
 In the solver, we used Depth First Search method to find the place to place blocks that will give the winning solutions. The solver as a whole includes Block, EmptyBlock, ReflectBlock, OpaqueBlock, RefractBlock, Lazor, LazorPath, Grid and Game class. They are the essential building blocks when we are trying to solve the lazor game!
 
 
+<br/><br/>
+If you have any questions, please feel free to email us!
 
+Mordred Yuan  jyuan31@jh.edu
+
+Yufei Sun  ysun119@jh.edu
 
