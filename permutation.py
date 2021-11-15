@@ -2,6 +2,98 @@ from itertools import permutations
 import time
 
 
+def read_bff(filename):
+
+
+    file = open(filename, 'r') # open file
+    contents = []
+    for line in file:
+        stripped = line.strip()
+        contents.append(stripped)
+    file.close()
+    ind1 = contents.index('GRID START')
+    ind2 = contents.index('GRID STOP')
+    vals = []
+    for row in contents[ind1 + 1:ind2]:  # extract grid info
+        row = list(row.replace(' ', ''))
+        vals.append(row)
+
+
+    contents = contents[ind2 + 1:]
+    xlen = len(vals[0])
+    ylen = len(vals)
+    blkvals = vals
+    xxlen = len(blkvals[0])
+    yylen = len(blkvals)
+    for i in range(yylen):
+        for j in range(xxlen):
+            if blkvals[i][j] == 'o':
+                blkvals[i][j] = '0'
+            elif blkvals[i][j] == 'A':
+                blkvals[i][j] = 'A'
+            elif blkvals[i][j] == 'B':
+                blkvals[i][j] = 'B'
+            elif blkvals[i][j] == 'C':
+                blkvals[i][j] = 'C'
+            else:
+                blkvals[i][j] = '1'
+
+    block_grid = blkvals
+
+
+    grid = [[0 for i in range(2 * xlen + 1)]
+            for j in range(2 * (ind2 - ind1) - 1)]
+
+    for x in range(2 * xlen + 1): # set up grid coordinate system
+        for y in range(len(grid)):
+            block_category = vals[(y - 1) // 2][(x - 1) // 2]
+            if (x % 2) == 0 or (y % 2) == 0:
+                grid[y][x] = Grid((x, y), block_category)
+            else:
+                grid[y][x] = Block((x, y), block_category)
+
+    A = 0
+    B = 0
+    C = 0
+    lazors = []
+    points = []
+    for line in contents: # extract usable block info
+        if 'A' in line:
+            A = int(line[-1])
+        if 'B' in line:
+            B = int(line[-1])
+        if 'C' in line:
+            C = int(line[-1])
+        if 'L' in line:
+            lazors.append([int(x) for x in line.split(' ')[1:]])
+        if 'P' in line:
+            points.append([int(x) for x in line.split(' ')[1:]])
+
+    usable_blocks = {'A': A, 'B': B, 'C': C}
+
+    start_point = []
+    direction = []
+    for i in range(len(lazors)):
+        start_point.append((lazors[i][0], lazors[i][1]))
+        direction.append((lazors[i][2], lazors[i][3]))
+
+    def trans(m): #reverse coordinate system to fit current coordinate system
+        a = [[] for i in m[0]]
+        for i in m:
+            for j in range(len(i)):
+                a[j].append(i[j])
+        return a
+    return trans(grid), usable_blocks, start_point, direction, points, block_grid  # return grid info
+
+
+def pos_check(coord, grid): # check if given position is in grid
+    if coord[0] >= 0 and coord[0] < len(grid) and coord[1] >= 0 and coord[1] < len(grid[0]):
+
+        return True
+    else:
+        return False
+
+
 class Block:
     def __init__(self, position, category):
         self.position = position
@@ -178,42 +270,53 @@ def format(block_grid, block_A, block_B, block_C):
 
 
 def check_results(lazor_starts, directions, new_grid, points):
-	def points_through(lazor_starts, directions, new_grid):
-		for i in range(len(lazor_starts)):
-        	l.append(Lasor(start_point[i], direction[i]))
-        	a, b = l[i].current_lazor_path(start_point[i], direction[i], new_grid)
-        	list_of_pos.extend(a)
-    	return list_of_pos
+    def points_through(lazor_starts, directions, new_grid):
+        l = []
+        list_of_pos = []
+        for i in range(len(lazor_starts)):
+            l.append(Lasor(start_point[i], direction[i]))
+            a, b = l[i].current_lazor_path(start_point[i], direction[i], new_grid)
+            list_of_pos.extend(a)
+        return list_of_pos
 
     path = points_through(lazor_starts, directions, new_grid)
 
     score = 0
-    for i in range(len(need_to_cross)):
-        if need_to_cross[i] in path:
+    for i in range(len(points)):
+        if points[i] in path:
             score += 1
 
-    if score == len(need_to_cross):
-    	print("Success!")
+    if score == len(points):
+        print("Success!")
         return path
-    else return None
+    else:
+        return None
 
 
-def grid_transform(grid):
+def grid_transform(grid, block_grid):
+    for x in range(len(block_grid[0])):
+        for y in range(len(block_grid)):
+
+            grid[2*x+1][2*y+1] = block_grid[x][y]
+
+            return grid
 
 
-def fill_grid(possible_boards, original_grid):
+
+def fill_grid(possible_boards, grid, original_grid, lazor_starts, directions, points):
 	for item in list(possible_boards):
+		print(item)
 		iter = 0
-		for i in len(grid):
-			for j in len(grid[0]):
+		for i in range(len(original_grid)):
+			for j in range(len(original_grid[0])):
 				if original_grid[i][j] == "0":
 					original_grid[i][j] = item[iter]
 					iter += 1
 
-		grid_transform(original_grid)
-		reuslt = check_results(lazor_starts, directions, new_grid, points)
+		new_grid = grid_transform(grid, original_grid)
+		result = check_results(lazor_starts, directions, new_grid, points)
 		if result != None:
-			return result
+			return new_grid
 		else:
 			continue
 
@@ -297,91 +400,6 @@ def blk_pos_check(coord, grid, block_grid):
 
 
 
-
-def read_bff(filename):
-
-
-    file = open(filename, 'r') # open file
-    contents = []
-    for line in file:
-        stripped = line.strip()
-        contents.append(stripped)
-    file.close()
-    ind1 = contents.index('GRID START')
-    ind2 = contents.index('GRID STOP')
-    vals = []
-    for row in contents[ind1 + 1:ind2]:  # extract grid info
-        row = list(row.replace(' ', ''))
-        vals.append(row)
-
-
-    contents = contents[ind2 + 1:]
-    xlen = len(vals[0])
-    ylen = len(vals)
-    blkvals = vals
-    xxlen = len(blkvals[0])
-    yylen = len(blkvals)
-    for i in range(yylen):
-        for j in range(xxlen):
-            if blkvals[i][j] == 'o':
-                blkvals[i][j] = '0'
-            elif blkvals[i][j] == 'A':
-                blkvals[i][j] = 'A'
-            elif blkvals[i][j] == 'B':
-                blkvals[i][j] = 'B'
-            elif blkvals[i][j] == 'C':
-                blkvals[i][j] = 'C'
-            else:
-                blkvals[i][j] = '1'
-
-    block_grid = blkvals
-
-
-    grid = [[0 for i in range(2 * xlen + 1)]
-            for j in range(2 * (ind2 - ind1) - 1)]
-
-    for x in range(2 * xlen + 1): # set up grid coordinate system
-        for y in range(len(grid)):
-            block_category = vals[(y - 1) // 2][(x - 1) // 2]
-            if (x % 2) == 0 or (y % 2) == 0:
-                grid[y][x] = Grid((x, y), block_category)
-            else:
-                grid[y][x] = Block((x, y), block_category)
-
-    A = 0
-    B = 0
-    C = 0
-    lazors = []
-    points = []
-    for line in contents: # extract usable block info
-        if 'A' in line:
-            A = int(line[-1])
-        if 'B' in line:
-            B = int(line[-1])
-        if 'C' in line:
-            C = int(line[-1])
-        if 'L' in line:
-            lazors.append([int(x) for x in line.split(' ')[1:]])
-        if 'P' in line:
-            points.append([int(x) for x in line.split(' ')[1:]])
-
-    usable_blocks = {'A': A, 'B': B, 'C': C}
-
-    start_point = []
-    direction = []
-    for i in range(len(lazors)):
-        start_point.append((lazors[i][0], lazors[i][1]))
-        direction.append((lazors[i][2], lazors[i][3]))
-
-    def trans(m): #reverse coordinate system to fit current coordinate system
-        a = [[] for i in m[0]]
-        for i in m:
-            for j in range(len(i)):
-                a[j].append(i[j])
-        return a
-    return trans(grid), usable_blocks, start_point, direction, points, block_grid  # return grid info
-
-
 def type_and_number(num_A, num_B, num_C):
     block_A = []
     block_B = []
@@ -405,16 +423,11 @@ if __name__ == "__main__":
 
 	#block_grid = [['0', 'B', '0'], ['0', '0', '0'], ['0', '0', '0']]
 
-	grid, usable_blocks, start_point, direction, points, block_grid = read_bff("/Users/mordredyuan/Downloads/Lazor-main/LazorProjectFall2021/yarn_5.bff")
+	grid, usable_blocks, start_point, direction, points, block_grid = read_bff("/Users/mordredyuan/Downloads/Lazor-main/LazorProjectFall2021/mad_1.bff")
 	block_A, block_B, block_C = type_and_number(usable_blocks["A"], usable_blocks["B"], usable_blocks["C"])
-	#permut(block_grid, block_A, block_B, block_C)
-	print(block_A)
-	print(block_B)
-	print(block_C)
+
 
 	items = format(block_grid, block_A, block_B, block_C)
-	print(items)
-	print(len(list(msp(items))))
-
-
-
+	possible_boards = list(permutation(items))
+	print(len(possible_boards))
+	fill_grid(possible_boards, grid, block_grid, start_point, direction, points)
