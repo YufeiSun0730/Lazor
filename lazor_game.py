@@ -8,8 +8,6 @@ In the solver, we used Depth First Search method to find
 the place to place blocks that will give the winning solutions.
 
 '''
-
-
 from collections import Counter
 from typing import Tuple, List, Dict, Optional, Set
 import argparse
